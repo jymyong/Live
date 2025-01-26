@@ -16,8 +16,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-          token: ${{ secrets.LIVELIST }}
 
     - name: GetTime
       run: echo "DATE=$(date +'%Y-%m-%d %H:%M:%S CST')" >> $GITHUB_ENV
@@ -63,4 +61,4 @@ jobs:
         git branch -m main
 
     - name: Push
-      run: git push -f origin main
+      run: git push -f live main
