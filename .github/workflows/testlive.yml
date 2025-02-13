@@ -1,6 +1,10 @@
 name: Update
 
 on:
+  watch:
+    types: [started]
+  schedule:
+    - cron: 0,30 */7 * * *
   workflow_dispatch:
 
 env:
@@ -50,12 +54,11 @@ jobs:
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git checkout --orphan temp
+        git checkout --orphan latest_branch
         git add -A
         git commit -am "$DATE"
-        git temp -D main
-        git temp -m main
+        git branch -D main
+        git branch -m main
 
     - name: Push
-      run: git push -f live main
-
+      run: git push -f origin main
