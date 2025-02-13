@@ -1,10 +1,6 @@
 name: Update
 
 on:
-  watch:
-    types: [started]
-  schedule:
-  
   workflow_dispatch:
 
 env:
