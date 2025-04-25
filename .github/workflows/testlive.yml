@@ -1,17 +1,15 @@
-name: Update
+name: Daily IPTV Sync
 
 on:
-  workflow_dispatch:
-  watch:
-    types: [started]
   schedule:
-    - cron: 0,30 */7 * * *
+    - cron: '0 23 * * *'  # UTC时间23点（北京时间次日7点）
+  workflow_dispatch:
 
 env:
   TZ: Asia/Shanghai
 
 jobs:
-  Update:
+  sync:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -20,32 +18,43 @@ jobs:
     - name: GetTime
       run: echo "DATE=$(date +'%Y-%m-%d %H:%M:%S CST')" >> $GITHUB_ENV
 
-    - name: Update
+    - name: Fetch Sources
       run: |
-        # 频道
-        rm -f IPTV.m3u && wget https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u -O IPTV.m3u
+        # 抓取 kimwang1978 的直播源（TXT格式）
+        wget https://raw.githubusercontent.com/kimwang1978/collect-tv-txt/main/live.txt -O kimwang_live.txt
+        
+        # 抓取 fanmingming 的IPv6直播源（M3U格式）
+        wget https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u -O fanmingming_ipv6.m3u
+        
+        # 抓取 kilvn 的IPTV直播源（M3U格式）
+        wget https://raw.githubusercontent.com/kilvn/iptv/master/iptv.m3u -O kilvn_iptv.m3u
 
-        # 节目单
-        rm -f EPG.xml && wget https://epg.112114.xyz/pp.xml -O EPG.xml
-        echo "已于 $DATE 自动更新频道
-        ## Star History
-        <a href='https://star-history.com/#skddyj/iptv&Date'>
-        <picture>
-        <source media='(prefers-color-scheme: dark)' srcset='https://api.star-history.com/svg?repos=skddyj/iptv&type=Date&theme=dark' />
-        <source media='(prefers-color-scheme: light)' srcset='https://api.star-history.com/svg?repos=skddyj/iptv&type=Date' />
-        <img alt='Star History Chart' src='https://api.star-history.com/svg?repos=skddyj/iptv&type=Date' />
-        </picture>
-        </a>" > README.md
+        # 转换为统一M3U格式并合并
+        echo "#EXTM3U" > combined.m3u
+        echo "# 来源1: kimwang1978/live.txt" >> combined.m3u
+        grep -v '^#' kimwang_live.txt | sed 's/^/#EXTINF:-1,/; $!N; s/\n/,/' >> combined.m3u
+        
+        echo "" >> combined.m3u
+        echo "# 来源2: fanmingming/ipv6.m3u" >> combined.m3u
+        cat fanmingming_ipv6.m3u | sed '/^#EXTM3U/d' >> combined.m3u
+        
+        echo "" >> combined.m3u
+        echo "# 来源3: kilvn/iptv.m3u" >> combined.m3u
+        cat kilvn_iptv.m3u | sed '/^#EXTM3U/d' >> combined.m3u
 
-    - name: Clean
+        # 生成README
+        echo "每日直播源自动同步更新 ($DATE)" > README.md
+        echo "### 数据来源" >> README.md
+        echo "1. [kimwang1978/live.txt](https://github.com/kimwang1978/collect-tv-txt)" >> README.md
+        echo "2. [fanmingming/ipv6.m3u](https://github.com/fanmingming/live)" >> README.md
+        echo "3. [kilvn/iptv.m3u](https://github.com/kilvn/iptv)" >> README.md
+
+    - name: Clean and Commit
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git checkout --orphan latest_branch
-        git add -A
-        git commit -am "$DATE"
-        git branch -D main
-        git branch -m main
-
-    - name: Push
-      run: git push -f origin main
+        git add .
+        git commit -am "自动更新直播源 ($DATE)"
+        
+    - name: Push Changes
+      run: git push
