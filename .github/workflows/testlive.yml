@@ -1,11 +1,11 @@
 name: Update
 
 on:
+  workflow_dispatch:
   watch:
     types: [started]
   schedule:
     - cron: 0,30 */7 * * *
-  workflow_dispatch:
 
 env:
   TZ: Asia/Shanghai
@@ -22,33 +22,20 @@ jobs:
 
     - name: Update
       run: |
-        # 央视源
-        rm -f CCTV.m3u && wget https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u -O CCTV.m3u
-        sed -i -n '/央视频道/,+1p' CCTV.m3u
-        sed -i '1i #EXTM3U' CCTV.m3u
-        sed -i '/^\s*$/d' CCTV.m3u
+        # 频道
+        rm -f IPTV.m3u && wget https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u -O IPTV.m3u
 
-        # 卫视源
-        rm -f CNTV.m3u && touch CNTV.m3u
-        wget https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u -O CNTV1.m3u && sed -i -n '/卫视频道/,+1p' CNTV1.m3u
-        wget https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u -O CNTV2.m3u && sed -i -n '/数字频道/,+1p' CNTV2.m3u
-        cat CNTV1.m3u >> CNTV.m3u
-        cat CNTV2.m3u >> CNTV.m3u
-        rm -f CNTV1.m3u CNTV2.m3u
-        sed -i '1i #EXTM3U' CNTV.m3u
-        sed -i '/^\s*$/d' CNTV.m3u
-
-        # 整合源
-        rm -f IPTV.m3u && touch IPTV.m3u
-        cat CCTV.m3u >> IPTV.m3u
-        cat CNTV.m3u >> IPTV.m3u
-        sed -i '/#EXTM3U/d' IPTV.m3u
-        sed -i '1i #EXTM3U' IPTV.m3u
-        sed -i '/^\s*$/d' IPTV.m3u
-
-        # 节目源
+        # 节目单
         rm -f EPG.xml && wget https://epg.112114.xyz/pp.xml -O EPG.xml
-        echo "Auto Update IPTV(ipv6) in $DATE,基于Moexin/IPTV项目修改,国内直播源同步fanmingming/live" > README.md
+        echo "已于 $DATE 自动更新频道
+        ## Star History
+        <a href='https://star-history.com/#skddyj/iptv&Date'>
+        <picture>
+        <source media='(prefers-color-scheme: dark)' srcset='https://api.star-history.com/svg?repos=skddyj/iptv&type=Date&theme=dark' />
+        <source media='(prefers-color-scheme: light)' srcset='https://api.star-history.com/svg?repos=skddyj/iptv&type=Date' />
+        <img alt='Star History Chart' src='https://api.star-history.com/svg?repos=skddyj/iptv&type=Date' />
+        </picture>
+        </a>" > README.md
 
     - name: Clean
       run: |
